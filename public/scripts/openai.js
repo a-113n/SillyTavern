@@ -199,6 +199,8 @@ export const chat_completion_sources = {
     SILICONFLOW: 'siliconflow',
     WORKERS_AI: 'workers_ai',
     MINIMAX: 'minimax',
+    OPENCODE_ZEN: 'opencode_zen',
+    NVIDIA_NIM: 'nvidia_nim',
 };
 
 const character_names_behavior = {
@@ -350,6 +352,8 @@ export const settingsToUpdate = {
     zai_endpoint: ['#zai_endpoint', 'zai_endpoint', false, true],
     workers_ai_model: ['#model_workers_ai_select', 'workers_ai_model', false, true],
     workers_ai_account_id: ['#workers_ai_account_id', 'workers_ai_account_id', false, true],
+    opencode_zen_model: ['#model_opencode_zen_select', 'opencode_zen_model', false, true],
+    nvidia_nim_model: ['#model_nvidia_nim_select', 'nvidia_nim_model', false, true],
     openai_max_context: ['#openai_max_context', 'openai_max_context', false, false],
     openai_max_tokens: ['#openai_max_tokens', 'openai_max_tokens', false, false],
     names_behavior: ['#names_behavior', 'names_behavior', false, false],
@@ -458,6 +462,8 @@ const default_settings = {
     zai_endpoint: ZAI_ENDPOINT.COMMON,
     workers_ai_model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
     workers_ai_account_id: '',
+    opencode_zen_model: '',
+    nvidia_nim_model: '',
     azure_base_url: '',
     azure_deployment_name: '',
     azure_api_version: '2024-02-15-preview',
@@ -1751,6 +1757,10 @@ export function getChatCompletionModel(settings = null) {
             return settings.zai_model;
         case chat_completion_sources.WORKERS_AI:
             return settings.workers_ai_model;
+        case chat_completion_sources.OPENCODE_ZEN:
+            return settings.opencode_zen_model;
+        case chat_completion_sources.NVIDIA_NIM:
+            return settings.nvidia_nim_model;
         default:
             console.error(`Unknown chat completion source: ${source}`);
             return '';
@@ -2277,6 +2287,42 @@ function saveModelList(data) {
         }
 
         $('#model_siliconflow_select').val(oai_settings.siliconflow_model).trigger('change');
+    }
+
+    if (oai_settings.chat_completion_source === chat_completion_sources.OPENCODE_ZEN) {
+        $('#model_opencode_zen_select').empty();
+        model_list.forEach((model) => {
+            $('#model_opencode_zen_select').append(
+                $('<option>', {
+                    value: model.id,
+                    text: model.id,
+                }));
+        });
+
+        const selectedModel = model_list.find(model => model.id === oai_settings.opencode_zen_model);
+        if (model_list.length > 0 && (!selectedModel || !oai_settings.opencode_zen_model)) {
+            oai_settings.opencode_zen_model = model_list[0].id;
+        }
+
+        $('#model_opencode_zen_select').val(oai_settings.opencode_zen_model).trigger('change');
+    }
+
+    if (oai_settings.chat_completion_source === chat_completion_sources.NVIDIA_NIM) {
+        $('#model_nvidia_nim_select').empty();
+        model_list.forEach((model) => {
+            $('#model_nvidia_nim_select').append(
+                $('<option>', {
+                    value: model.id,
+                    text: model.id,
+                }));
+        });
+
+        const selectedModel = model_list.find(model => model.id === oai_settings.nvidia_nim_model);
+        if (model_list.length > 0 && (!selectedModel || !oai_settings.nvidia_nim_model)) {
+            oai_settings.nvidia_nim_model = model_list[0].id;
+        }
+
+        $('#model_nvidia_nim_select').val(oai_settings.nvidia_nim_model).trigger('change');
     }
 
     if (oai_settings.chat_completion_source === chat_completion_sources.FIREWORKS) {
@@ -5568,6 +5614,24 @@ async function onModelChange() {
         oai_settings.workers_ai_model = value;
     }
 
+    if ($(this).is('#model_opencode_zen_select')) {
+        if (!value) {
+            console.debug('Null OpenCode Zen model selected. Ignoring.');
+            return;
+        }
+        console.log('OpenCode Zen model changed to', value);
+        oai_settings.opencode_zen_model = value;
+    }
+
+    if ($(this).is('#model_nvidia_nim_select')) {
+        if (!value) {
+            console.debug('Null Nvidia NIM model selected. Ignoring.');
+            return;
+        }
+        console.log('Nvidia NIM model changed to', value);
+        oai_settings.nvidia_nim_model = value;
+    }
+
     if ([chat_completion_sources.MAKERSUITE, chat_completion_sources.VERTEXAI].includes(oai_settings.chat_completion_source)) {
         const contextSize = getGeminiMaxContext(value, oai_settings.max_context_unlocked);
         const maxTemp = getGeminiMaxTemp(value);
@@ -5869,7 +5933,9 @@ async function onModelChange() {
     }
 
     if (oai_settings.chat_completion_source === chat_completion_sources.MINIMAX) {
-        const maxContext = oai_settings.minimax_model === 'M2-her' ? 65536 : 204800;
+        const maxContext = oai_settings.minimax_model === 'M2-her' ? 65536
+            : oai_settings.minimax_model === 'MiniMax-M3' ? max_1mil
+            : 204800;
         $('#openai_max_context').attr('max', maxContext);
         oai_settings.openai_max_context = Math.min(Number($('#openai_max_context').attr('max')), oai_settings.openai_max_context);
         $('#openai_max_context').val(oai_settings.openai_max_context).trigger('input');

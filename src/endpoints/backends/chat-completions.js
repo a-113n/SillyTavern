@@ -94,6 +94,8 @@ const API_MINIMAX = 'https://api.minimax.io/v1';
 const API_MINIMAX_CN = 'https://api.minimaxi.com/v1';
 const API_OPENROUTER = 'https://openrouter.ai/api/v1';
 const API_WORKERS_AI = 'https://api.cloudflare.com/client/v4/accounts';
+const API_OPENCODE_ZEN = 'https://opencode.ai/zen/v1';
+const API_NVIDIA_NIM = 'https://integrate.api.nvidia.com/v1';
 
 /**
  * Module-scoped Claude caching configuration values.
@@ -1809,6 +1811,14 @@ router.post('/status', async function (request, statusResponse) {
             apiUrl = API_FIREWORKS;
             apiKey = readSecret(request.user.directories, SECRET_KEYS.FIREWORKS, request.body.secret_id);
             headers = {};
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OPENCODE_ZEN) {
+            apiUrl = API_OPENCODE_ZEN;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.OPENCODE_ZEN, request.body.secret_id);
+            headers = {};
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.NVIDIA_NIM) {
+            apiUrl = API_NVIDIA_NIM;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.NVIDIA_NIM, request.body.secret_id);
+            headers = {};
         } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.MAKERSUITE) {
             apiKey = request.body.reverse_proxy ? request.body.proxy_password : readSecret(request.user.directories, SECRET_KEYS.MAKERSUITE, request.body.secret_id);
             apiUrl = trimTrailingSlash(request.body.reverse_proxy || API_MAKERSUITE);
@@ -2474,6 +2484,16 @@ router.post('/generate', async function (request, response) {
             if (request.body.json_schema) {
                 setJsonObjectFormat(bodyParams, request.body.messages, request.body.json_schema);
             }
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OPENCODE_ZEN) {
+            apiUrl = API_OPENCODE_ZEN;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.OPENCODE_ZEN, request.body.secret_id);
+            headers = {};
+            bodyParams = {};
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.NVIDIA_NIM) {
+            apiUrl = API_NVIDIA_NIM;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.NVIDIA_NIM, request.body.secret_id);
+            headers = {};
+            bodyParams = {};
         } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.WORKERS_AI) {
             apiKey = readSecret(request.user.directories, SECRET_KEYS.WORKERS_AI, request.body.secret_id);
             const accountId = String(request.body.workers_ai_account_id || '').trim();

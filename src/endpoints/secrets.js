@@ -70,6 +70,8 @@ export const SECRET_KEYS = {
     VOLCENGINE_APP_ID: 'volcengine_app_id',
     VOLCENGINE_ACCESS_KEY: 'volcengine_access_key',
     WORKERS_AI: 'api_key_workers_ai',
+    OPENCODE_ZEN: 'api_key_opencode_zen',
+    NVIDIA_NIM: 'api_key_nvidia_nim',
 };
 
 /**

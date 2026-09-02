@@ -211,6 +211,8 @@ export const CHAT_COMPLETION_SOURCES = {
     SILICONFLOW: 'siliconflow',
     MINIMAX: 'minimax',
     WORKERS_AI: 'workers_ai',
+    OPENCODE_ZEN: 'opencode_zen',
+    NVIDIA_NIM: 'nvidia_nim',
 };
 
 /**

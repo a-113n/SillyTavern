@@ -135,6 +135,8 @@ export function extractReasoningFromData(data, {
                 case chat_completion_sources.SILICONFLOW:
                 case chat_completion_sources.ZAI:
                 case chat_completion_sources.WORKERS_AI:
+                case chat_completion_sources.OPENCODE_ZEN:
+                case chat_completion_sources.NVIDIA_NIM:
                 case chat_completion_sources.CUSTOM: {
                     return data?.choices?.[0]?.message?.reasoning_content
                         ?? data?.choices?.[0]?.message?.reasoning

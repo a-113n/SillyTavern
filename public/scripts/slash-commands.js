@@ -6274,6 +6274,8 @@ function getModelOptions(quiet) {
         { id: 'model_cometapi_select', api: 'openai', type: chat_completion_sources.COMETAPI },
         { id: 'model_zai_select', api: 'openai', type: chat_completion_sources.ZAI },
         { id: 'model_workers_ai_select', api: 'openai', type: chat_completion_sources.WORKERS_AI },
+        { id: 'model_opencode_zen_select', api: 'openai', type: chat_completion_sources.OPENCODE_ZEN },
+        { id: 'model_nvidia_nim_select', api: 'openai', type: chat_completion_sources.NVIDIA_NIM },
         { id: 'model_novel_select', api: 'novel', type: null },
         { id: 'horde_model', api: 'koboldhorde', type: null },
     ];
