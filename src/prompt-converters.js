@@ -762,14 +762,26 @@ export function convertMistralMessages(messages, names) {
     };
     fixToolMessages();
 
-    // If system role message immediately follows an assistant message, change its role to user
-    for (let i = 0; i < messages.length - 1; i++) {
-        if (messages[i].role === 'assistant' && messages[i + 1].role === 'system') {
-            messages[i + 1].role = 'user';
+    // Mistral requires strict user/assistant alternation and at most one leading system message.
+    // Demote any non-leading system message to user, then squash consecutive same-role messages.
+    for (let i = 1; i < messages.length; i++) {
+        if (messages[i].role === 'system') {
+            messages[i].role = 'user';
         }
     }
 
-    return messages;
+    const mergedMessages = [];
+    for (const message of messages) {
+        const prev = mergedMessages[mergedMessages.length - 1];
+        if (prev && prev.role === message.role && message.role !== 'tool' && message.content) {
+            prev.content += '\n\n' + message.content;
+            if (message.prefix) prev.prefix = true;
+        } else {
+            mergedMessages.push(message);
+        }
+    }
+
+    return mergedMessages;
 }
 
 /**

@@ -1166,6 +1166,34 @@ describe('convertMistralMessages', () => {
         expect(result[0].content).toContain('search cats');
         expect(result[0].content).toContain('thanks');
     });
+
+    test('merges consecutive same-role messages to keep alternation', () => {
+        const messages = [
+            { role: 'system', content: 'Main prompt' },
+            { role: 'user', content: 'Persona description' },
+            { role: 'user', content: 'Injected prompt' },
+            { role: 'assistant', content: 'Hello' },
+            { role: 'assistant', content: 'World' },
+            { role: 'user', content: 'Reply' },
+        ];
+        const result = mod.convertMistralMessages(messages, names);
+        // Leading system stays; the two user and two assistant messages get squashed
+        expect(result.map(m => m.role)).toEqual(['system', 'user', 'assistant', 'user']);
+        expect(result[1].content).toBe('Persona description\n\nInjected prompt');
+        expect(result[2].content).toBe('Hello\n\nWorld');
+    });
+
+    test('demotes a non-leading system message to user and merges it', () => {
+        const messages = [
+            { role: 'user', content: 'Hi' },
+            { role: 'system', content: 'Author note' },
+            { role: 'assistant', content: 'Hello' },
+        ];
+        const result = mod.convertMistralMessages(messages, names);
+        // System after a user message must become user and merge with the preceding user turn
+        expect(result.map(m => m.role)).toEqual(['user', 'assistant']);
+        expect(result[0].content).toBe('Hi\n\nAuthor note');
+    });
 });
 
 

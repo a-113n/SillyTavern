@@ -514,6 +514,9 @@ export class AutoComplete {
      * Update position of DOM.
      */
     updatePosition() {
+        if (!this.textarea) {
+            return;
+        }
         if (this.isFloating) {
             this.updateFloatingPosition();
         } else {
@@ -540,6 +543,9 @@ export class AutoComplete {
      * Update position of details DOM.
      */
     updateDetailsPosition() {
+        if (!this.textarea) {
+            return;
+        }
         if (this.isShowingDetails || !this.isReplaceable) {
             if (this.isFloating) {
                 this.updateFloatingDetailsPosition();
@@ -571,6 +577,9 @@ export class AutoComplete {
      * Update position of floating autocomplete.
      */
     updateFloatingPosition() {
+        if (!this.textarea) {
+            return;
+        }
         const location = this.getCursorPosition();
         const rect = this.textarea.getBoundingClientRect();
         const layerRect = this.getLayer().getBoundingClientRect();
@@ -594,6 +603,9 @@ export class AutoComplete {
     }
 
     updateFloatingDetailsPosition(location = null) {
+        if (!this.textarea) {
+            return;
+        }
         if (!location) location = this.getCursorPosition();
         const rect = this.textarea.getBoundingClientRect();
         const layerRect = this.getLayer().getBoundingClientRect();

@@ -5937,6 +5937,8 @@ async function onConnectButtonClick(e) {
         [chat_completion_sources.POLLINATIONS]: { key: SECRET_KEYS.POLLINATIONS, selector: '#api_key_pollinations', proxy: false },
         [chat_completion_sources.WORKERS_AI]: { key: SECRET_KEYS.WORKERS_AI, selector: '#api_key_workers_ai', proxy: false },
         [chat_completion_sources.MINIMAX]: { key: SECRET_KEYS.MINIMAX, selector: '#api_key_minimax', proxy: false },
+        [chat_completion_sources.OPENCODE_ZEN]: { key: SECRET_KEYS.OPENCODE_ZEN, selector: '#api_key_opencode_zen', proxy: false },
+        [chat_completion_sources.NVIDIA_NIM]: { key: SECRET_KEYS.NVIDIA_NIM, selector: '#api_key_nvidia_nim', proxy: false },
     };
 
     // Vertex AI Express version - use API key
@@ -6030,6 +6032,10 @@ function toggleChatCompletionForms() {
         $('#model_zai_select').trigger('change');
     } else if (oai_settings.chat_completion_source == chat_completion_sources.WORKERS_AI) {
         $('#model_workers_ai_select').trigger('change');
+    } else if (oai_settings.chat_completion_source == chat_completion_sources.OPENCODE_ZEN) {
+        $('#model_opencode_zen_select').trigger('change');
+    } else if (oai_settings.chat_completion_source == chat_completion_sources.NVIDIA_NIM) {
+        $('#model_nvidia_nim_select').trigger('change');
     }
 
     $('[data-source]').each(function () {
