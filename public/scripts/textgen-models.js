@@ -50,6 +50,7 @@ const OPENROUTER_PROVIDERS = [
     'Cloudflare',
     'Cohere',
     'Crusoe',
+    'Decart',
     'DeepInfra',
     'DeepSeek',
     'DekaLLM',
