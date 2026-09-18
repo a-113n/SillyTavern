@@ -15,7 +15,7 @@ public/NovelAI Settings/
 public/TextGen Settings/
 public/instruct/
 public/context/
-public/scripts/extensions/third-party/
+public/scripts/extensions/third-party/*
 public/stats.json
 /uploads/
 *.jsonl
@@ -50,7 +50,7 @@ public/error/
 /plugins/
 /data
 /default/scaffold
-public/scripts/extensions/third-party
+public/scripts/extensions/third-party/*
 /certs
 .aider*
 .env
@@ -58,3 +58,7 @@ public/scripts/extensions/third-party
 yarn.lock
 *.code-workspace
 test-results/
+
+# keep our own logbook extension versioned despite third-party ignore
+!public/scripts/extensions/third-party/st-logbook/
+!public/scripts/extensions/third-party/st-logbook/**

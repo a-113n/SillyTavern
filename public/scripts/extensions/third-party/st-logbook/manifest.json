@@ -1,0 +1,13 @@
+{
+    "display_name": "Logbook",
+    "loading_order": 150,
+    "requires": [],
+    "optional": [],
+    "js": "index.js",
+    "css": "style.css",
+    "author": "allen",
+    "version": "0.1.0",
+    "homePage": "",
+    "auto_update": false,
+    "description": "Persistent Internal States logbook: stores the states block in chat metadata, strips it from prompts, re-injects authoritative state at depth 0."
+}
