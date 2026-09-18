@@ -43,3 +43,14 @@ export function shouldHarvest(logbook, mesId) {
     if (logbook.pinned && mesId === logbook.sourceMesId) return false;
     return true;
 }
+
+/**
+ * The turn a harvest of message mesId should store.
+ * Only a genuinely new message (id beyond the stored source) advances the turn;
+ * re-parses of the same message (swipe / edit / continue) keep the turn, and
+ * earlier ids (history deletion shifted indices) are conservative.
+ */
+export function nextTurnFor(logbook, mesId) {
+    if (!logbook) return 1;
+    return mesId > logbook.sourceMesId ? logbook.turn + 1 : logbook.turn;
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildInjection, nextTurnFrom, isSameState, shouldHarvest } from '../turn.js';
+import { buildInjection, nextTurnFrom, isSameState, shouldHarvest, nextTurnFor } from '../turn.js';
 
 const logbook = { turn: 196, raw: '<!-- GFX_START -->…<!-- GFX_END -->', sourceMesId: 300, contentHash: 'abc' };
 
@@ -30,4 +30,15 @@ test('shouldHarvest suppresses pinned source message but allows new messages', (
     assert.equal(shouldHarvest(pinned, 301), true);  // a different (newer) message → harvest
     assert.equal(shouldHarvest(logbook, 300), true); // unpinned → normal harvesting
     assert.equal(shouldHarvest(null, 300), false);   // dormant chat
+});
+
+test('nextTurnFor increments only on genuinely new messages', () => {
+    // new message beyond source → advance
+    assert.equal(nextTurnFor(logbook, 301), 197);
+    // same message re-parsed (swipe / edit / continue) → same turn
+    assert.equal(nextTurnFor(logbook, 300), 196);
+    // earlier message id (history deletion) → conservative, same turn
+    assert.equal(nextTurnFor(logbook, 299), 196);
+    // no logbook yet → start at 1
+    assert.equal(nextTurnFor(null, 0), 1);
 });

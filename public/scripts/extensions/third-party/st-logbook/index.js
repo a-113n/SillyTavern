@@ -5,7 +5,7 @@
 // authoritative logbook at in-chat depth 0 so the model reads state instead
 // of reconstructing it from its own past responses.
 import { extractStatesBlock, validateSections, extractTurn, renumberTurn } from './parser.js';
-import { buildInjection, nextTurnFrom, isSameState, shouldHarvest } from './turn.js';
+import { buildInjection, isSameState, shouldHarvest, nextTurnFor } from './turn.js';
 
 const MODULE = 'st-logbook';
 const IN_CHAT = 1;      // extension_prompt_types.IN_CHAT (public/script.js)
@@ -131,7 +131,7 @@ function harvest(messageId) {
     }
     const h = hash(parsed.full);
     if (isSameState(lb, i, h)) return;
-    const next = nextTurnFrom(lb);
+    const next = nextTurnFor(lb, i);
     chatMetadata.logbook = {
         turn: next,
         raw: renumberTurn(parsed.full, next),
@@ -231,9 +231,13 @@ jQuery(() => {
             <label><input id="st_logbook_edit_pin" type="checkbox" checked> <span>Pin this edit — ignore the original message if it is re-parsed (unpins automatically on the next new message)</span></label>
         </div>`;
         const popup = new ctx().Popup(body, POPUP_TYPE_CONFIRM, '', { wide: true, large: true, allowVerticalScrolling: true, okButton: 'Save', cancelButton: 'Cancel' });
+        // capture references now: the dialog is removed from the DOM once it closes,
+        // but detached nodes still carry their current value
+        const $area = $(popup.content).find('#st_logbook_edit_area');
+        const $pin = $(popup.content).find('#st_logbook_edit_pin');
         const result = await popup.show();
         if (result !== POPUP_RESULT_AFFIRMATIVE) return;
-        const edited = String($('#st_logbook_edit_area').val() ?? '');
+        const edited = String($area.val() ?? '');
         if (!edited.includes('<!-- GFX_START -->') || !edited.includes('<!-- GFX_END -->')) {
             toastr.error('Logbook must keep the GFX_START / GFX_END markers — not saved');
             return;
@@ -245,14 +249,14 @@ jQuery(() => {
             raw: edited.trim(),
             sourceMesId: lb.sourceMesId,
             contentHash: hash(edited),
-            pinned: $('#st_logbook_edit_pin').prop('checked'),
+            pinned: $pin.prop('checked'),
             updatedAt: Date.now(),
         };
         saveMetadataDebounced();
         inject();
         syncStatus();
         lastError = null;
-        toastr.success(`Logbook saved (Turn ${turn}${$('#st_logbook_edit_pin').prop('checked') ? ', pinned' : ''})`);
+        toastr.success(`Logbook saved (Turn ${turn}${$pin.prop('checked') ? ', pinned' : ''})`);
     });
     $('#st_logbook_reset').on('click', () => {
         bootstrap(true);
