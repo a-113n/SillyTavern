@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { extractStatesBlock } from '../parser.js';
+import { extractStatesBlock, validateSections } from '../parser.js';
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), 'fixtures');
 const realBlock = readFileSync(join(fixtures, 'bunker-real-block.html'), 'utf8');
@@ -77,4 +77,28 @@ test('no states block returns null', () => {
 test('tail sections without gfx wrapper are invalid (null)', () => {
     const orphan = `<details><summary>💚 BONDS</summary>…</details>`;
     assert.equal(extractStatesBlock('prose\n\n' + orphan), null);
+});
+
+test('validateSections reports present/missing canonical sections', () => {
+    const r = extractStatesBlock(synthetic);
+    const inv = validateSections(r.full);
+    assert.deepEqual(inv.present.sort(), ['NPC AGENDAS', 'PHYSICS, ENGINE & WORLD', 'BONDS', 'INTERNAL THOUGHTS'].sort());
+    assert.ok(inv.missing.includes('QUESTS'));
+    assert.ok(inv.missing.includes("GM'S NOTEBOOK"));
+    assert.ok(inv.missing.includes('CHEKHOV'));
+    assert.ok(inv.missing.includes('INV & SKILLS'));
+});
+
+test('validateSections on real fixture finds 11 canonical sections, DND missing', () => {
+    const r = extractStatesBlock(realBlock);
+    const inv = validateSections(r.full);
+    assert.equal(inv.present.length, 11); // 8 core + BONDS/CHEKHOV/THOUGHTS (wrapper label is not a section)
+    assert.deepEqual(inv.missing, ['DND TASK SIM']);
+});
+
+test('validateSections tolerates whitespace after summary tag', () => {
+    const spaced = synthetic.replace('<summary>🎬 INTERNAL STATES (Turn: 41) </summary>', '<summary> 🎬 INTERNAL STATES (Turn: 41)</summary>')
+        .replace('<summary>👤 NPC AGENDAS</summary>', '<summary> 👤 NPC AGENDAS </summary>');
+    const inv = validateSections(extractStatesBlock(spaced).full);
+    assert.ok(inv.present.includes('NPC AGENDAS'));
 });
