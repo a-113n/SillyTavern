@@ -219,5 +219,5 @@ jQuery(() => {
         toastr.info('Logbook re-seeded from chat history');
     });
     syncStatus();
-    console.debug(`[${MODULE}] ready`);
+    console.log(`[${MODULE}] ready`);
 });
