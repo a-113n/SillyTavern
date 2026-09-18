@@ -12,7 +12,7 @@ import mime from 'mime-types';
 import { delay, getBasicAuthHeader, isValidUrl, tryParse } from '../util.js';
 import { readSecret, SECRET_KEYS } from './secrets.js';
 import { getFileNameValidationFunction } from '../middleware/validateFileName.js';
-import { AIMLAPI_HEADERS } from '../constants.js';
+import { AIMLAPI_HEADERS, MINIMAX_ENDPOINT } from '../constants.js';
 
 /**
  * Gets the comfy workflows.
@@ -2050,6 +2050,101 @@ zai.post('/generate-video', async (request, response) => {
     }
 });
 
+const minimax = express.Router();
+
+minimax.post('/generate', async (request, response) => {
+    try {
+        const controller = new AbortController();
+        request.socket.removeAllListeners('close');
+        request.socket.on('close', function () {
+            controller.abort();
+        });
+
+        const key = readSecret(request.user.directories, SECRET_KEYS.MINIMAX);
+
+        if (!key) {
+            console.warn('MiniMax key not found.');
+            return response.sendStatus(400);
+        }
+
+        const apiUrl = request.body.endpoint === MINIMAX_ENDPOINT.CN
+            ? 'https://api.minimaxi.com/v1/image_generation'
+            : 'https://api.minimax.io/v1/image_generation';
+
+        console.debug('MiniMax image request:', request.body);
+
+        const generateResponse = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${key}`,
+            },
+            body: JSON.stringify({
+                model: request.body.model,
+                prompt: request.body.prompt,
+                aspect_ratio: request.body.aspect_ratio,
+                prompt_optimizer: request.body.prompt_optimizer,
+                seed: request.body.seed,
+                response_format: 'url',
+                n: 1,
+            }),
+            signal: controller.signal,
+        });
+
+        if (!generateResponse.ok) {
+            const text = await generateResponse.text();
+            console.warn('MiniMax returned an error.', generateResponse.status, text);
+            return response.status(500).send(text);
+        }
+
+        /** @type {any} */
+        const data = await generateResponse.json();
+        console.debug('MiniMax image response:', data);
+
+        if (data?.base_resp?.status_code !== 0) {
+            console.warn('MiniMax request was not successful.', data?.base_resp);
+            return response.status(500).send(data?.base_resp?.status_msg || 'MiniMax request was not successful.');
+        }
+
+        const urlString = String(data?.data?.image_urls?.[0] ?? '');
+
+        if (!urlString || !isValidUrl(urlString)) {
+            console.warn('MiniMax returned an invalid image URL.');
+            return response.sendStatus(500);
+        }
+
+        const url = new URL(urlString);
+
+        for (let attempt = 0; attempt < 5; attempt++) {
+            const imageResponse = await fetch(url, { signal: controller.signal });
+
+            if (!imageResponse.ok) {
+                // Sometimes the URL is valid but the image isn't immediately available
+                if (imageResponse.status === 404) {
+                    console.info('MiniMax image not found yet, retrying...', { attempt: attempt + 1 });
+                    await delay(1000);
+                    continue;
+                }
+
+                console.warn('MiniMax image fetch returned an error. Status:', imageResponse.status, imageResponse.statusText);
+                return response.sendStatus(500);
+            }
+
+            const buffer = await imageResponse.arrayBuffer();
+            const image = Buffer.from(buffer).toString('base64');
+            const format = path.extname(url.pathname).substring(1).toLowerCase() || 'png';
+
+            return response.send({ image, format });
+        }
+
+        console.warn('MiniMax image was not available after multiple attempts.');
+        return response.sendStatus(500);
+    } catch (error) {
+        console.error(error);
+        return response.sendStatus(500);
+    }
+});
+
 const workersai = express.Router();
 
 workersai.post('/models', async (request, response) => {
@@ -2205,4 +2300,5 @@ router.use('/falai', falai);
 router.use('/xai', xai);
 router.use('/aimlapi', aimlapi);
 router.use('/zai', zai);
+router.use('/minimax', minimax);
 router.use('/workersai', workersai);

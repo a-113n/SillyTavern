@@ -52,6 +52,7 @@
                 <option value="falai">FAL.AI</option>
                 <option value="google">Google AI</option>
                 <option value="huggingface">HuggingFace Inference API (serverless)</option>
+                <option value="minimax">MiniMax</option>
                 <option value="nanogpt">NanoGPT</option>
                 <option value="novel">NovelAI Diffusion</option>
                 <option value="openai">OpenAI</option>
@@ -187,6 +188,46 @@
             </div>
             <div data-sd-source="zai">
                 <b>Will use Common API. Coding API is not supported!</b>
+            </div>
+            <div data-sd-source="minimax">
+                <div class="flex-container">
+                    <div class="flex1">
+                        <label for="sd_minimax_endpoint" data-i18n="API Endpoint">API Endpoint</label>
+                        <select id="sd_minimax_endpoint" class="text_pole">
+                            <option value="global">Global (api.minimax.io)</option>
+                            <option value="cn">China (api.minimaxi.com)</option>
+                        </select>
+                    </div>
+                    <div class="flex1">
+                        <label for="sd_minimax_aspect_ratio" data-i18n="Aspect Ratio">Aspect Ratio</label>
+                        <select id="sd_minimax_aspect_ratio" class="text_pole">
+                            <option value="auto" data-i18n="Auto (from Width/Height)">Auto (from Width/Height)</option>
+                            <option value="1:1">1:1 (1024x1024)</option>
+                            <option value="16:9">16:9 (1280x720)</option>
+                            <option value="4:3">4:3 (1152x864)</option>
+                            <option value="3:2">3:2 (1248x832)</option>
+                            <option value="2:3">2:3 (832x1248)</option>
+                            <option value="3:4">3:4 (864x1152)</option>
+                            <option value="9:16">9:16 (720x1280)</option>
+                            <option value="21:9">21:9 (1344x576)</option>
+                        </select>
+                    </div>
+                </div>
+                <label class="checkbox_label" for="sd_minimax_prompt_optimizer" data-i18n="[title]Enable automatic optimization of the prompt by the MiniMax API." title="Enable automatic optimization of the prompt by the MiniMax API.">
+                    <input id="sd_minimax_prompt_optimizer" type="checkbox" />
+                    <span data-i18n="Prompt Optimizer">Prompt Optimizer</span>
+                </label>
+                <div class="flex-container flexnowrap alignItemsBaseline marginBot5">
+                    <a href="https://platform.minimax.io/user-center/basic-information/interface-key" target="_blank" rel="noopener noreferrer">
+                        <strong data-i18n="API Key">API Key</strong>
+                        <i class="fa-solid fa-share-from-square"></i>
+                    </a>
+                    <span class="expander"></span>
+                    <div id="sd_minimax_key" class="menu_button menu_button_icon manage-api-keys" data-key="api_key_minimax">
+                        <i class="fa-fw fa-solid fa-key"></i>
+                        <span data-i18n="Click to set">Click to set</span>
+                    </div>
+                </div>
             </div>
             <div data-sd-source="openai,aimlapi,zai">
                 <div class="flex-container">
@@ -578,7 +619,7 @@
                 </label>
             </div>
 
-            <div data-sd-source="novel,togetherai,pollinations,comfy,drawthings,vlad,auto,horde,extras,stability,bfl,sdcpp" class="marginTop5">
+            <div data-sd-source="novel,togetherai,pollinations,comfy,drawthings,vlad,auto,horde,extras,stability,bfl,sdcpp,minimax" class="marginTop5">
                 <label for="sd_seed">
                     <span data-i18n="Seed">Seed</span>
                     <small data-i18n="(-1 for random)">(-1 for random)</small>

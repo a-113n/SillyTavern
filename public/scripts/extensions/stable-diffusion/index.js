@@ -95,6 +95,7 @@ const sources = {
     zai: 'zai',
     openrouter: 'openrouter',
     workersai: 'workersai',
+    minimax: 'minimax',
 };
 const comfyTypes = {
     standard: 'standard',
@@ -360,6 +361,11 @@ const defaultSettings = {
     google_api: 'makersuite',
     google_enhance: true,
     google_duration: 6,
+
+    // MiniMax settings
+    minimax_endpoint: 'global',
+    minimax_aspect_ratio: 'auto',
+    minimax_prompt_optimizer: false,
 };
 
 const writePromptFieldsDebounced = debounce(writePromptFields, debounce_timeout.relaxed);
@@ -560,6 +566,9 @@ async function loadSettings() {
     $('#sd_google_api').val(extension_settings.sd.google_api);
     $('#sd_google_enhance').prop('checked', extension_settings.sd.google_enhance);
     $('#sd_google_duration').val(extension_settings.sd.google_duration);
+    $('#sd_minimax_endpoint').val(extension_settings.sd.minimax_endpoint);
+    $('#sd_minimax_aspect_ratio').val(extension_settings.sd.minimax_aspect_ratio);
+    $('#sd_minimax_prompt_optimizer').prop('checked', extension_settings.sd.minimax_prompt_optimizer);
 
     for (const style of extension_settings.sd.styles) {
         const option = document.createElement('option');
@@ -1746,6 +1755,9 @@ async function loadSamplers() {
         case sources.workersai:
             samplers = ['N/A'];
             break;
+        case sources.minimax:
+            samplers = ['N/A'];
+            break;
     }
 
     for (const sampler of samplers) {
@@ -1998,6 +2010,9 @@ async function loadModels() {
             break;
         case sources.workersai:
             models = await loadWorkersAIImageModels();
+            break;
+        case sources.minimax:
+            models = await loadMinimaxModels();
             break;
     }
 
@@ -2521,6 +2536,14 @@ async function loadZaiModels() {
     ];
 }
 
+async function loadMinimaxModels() {
+    $('#sd_minimax_key').toggleClass('success', !!secret_state[SECRET_KEYS.MINIMAX]);
+
+    return [
+        { value: 'image-01', text: 'image-01' },
+    ];
+}
+
 async function loadOpenRouterModels() {
     const result = await fetch('/api/openrouter/models/image', {
         method: 'POST',
@@ -2641,6 +2664,9 @@ async function loadSchedulers() {
             schedulers = ['N/A'];
             break;
         case sources.workersai:
+            schedulers = ['N/A'];
+            break;
+        case sources.minimax:
             schedulers = ['N/A'];
             break;
     }
@@ -2764,6 +2790,9 @@ async function loadVaes() {
             vaes = ['N/A'];
             break;
         case sources.workersai:
+            vaes = ['N/A'];
+            break;
+        case sources.minimax:
             vaes = ['N/A'];
             break;
     }
@@ -3418,6 +3447,9 @@ async function sendGenerationRequest(generationType, prompt, additionalNegativeP
             case sources.workersai:
                 result = await generateWorkersAIImage(prefixedPrompt, negativePrompt, signal);
                 break;
+            case sources.minimax:
+                result = await generateMinimaxImage(prefixedPrompt, signal);
+                break;
         }
 
         if (!result.data) {
@@ -3562,7 +3594,7 @@ async function generateExtrasImage(prompt, negativePrompt, signal) {
  * Gets an aspect ratio for Stability that is the closest to the given width and height.
  * @param {number} width Target width
  * @param {number} height Target height
- * @param {'google'|'stability'|'zai'|'xai'} source Source of the request, used to determine aspect ratio
+ * @param {'google'|'stability'|'zai'|'xai'|'minimax'} source Source of the request, used to determine aspect ratio
  * @returns {string} Closest aspect ratio as a string
  */
 function getClosestAspectRatio(width, height, source) {
@@ -3593,6 +3625,17 @@ function getClosestAspectRatio(width, height, source) {
                     '1:1': 1,
                     '16:9': 16 / 9,
                     '9:16': 9 / 16,
+                };
+            case 'minimax':
+                return {
+                    '1:1': 1,
+                    '16:9': 16 / 9,
+                    '9:16': 9 / 16,
+                    '4:3': 4 / 3,
+                    '3:4': 3 / 4,
+                    '3:2': 3 / 2,
+                    '2:3': 2 / 3,
+                    '21:9': 21 / 9,
                 };
             case 'xai':
                 return {
@@ -4708,6 +4751,40 @@ async function generateZaiImage(prompt, signal) {
 }
 
 /**
+ * Generates an image using the MiniMax API.
+ * @param {string} prompt The main instruction used to guide the image generation.
+ * @param {AbortSignal} signal An AbortSignal object that can be used to cancel the request.
+ * @returns {Promise<{format: string, data: string}>} A promise that resolves when the image generation and processing are complete.
+ */
+async function generateMinimaxImage(prompt, signal) {
+    const aspectRatio = extension_settings.sd.minimax_aspect_ratio === 'auto'
+        ? getClosestAspectRatio(extension_settings.sd.width, extension_settings.sd.height, 'minimax')
+        : extension_settings.sd.minimax_aspect_ratio;
+
+    const result = await fetch('/api/sd/minimax/generate', {
+        method: 'POST',
+        headers: getRequestHeaders(),
+        signal: signal,
+        body: JSON.stringify({
+            prompt: prompt.slice(0, 1500),
+            model: extension_settings.sd.model,
+            aspect_ratio: aspectRatio,
+            prompt_optimizer: extension_settings.sd.minimax_prompt_optimizer,
+            endpoint: extension_settings.sd.minimax_endpoint,
+            seed: extension_settings.sd.seed >= 0 ? extension_settings.sd.seed : undefined,
+        }),
+    });
+
+    if (result.ok) {
+        const data = await result.json();
+        return { format: data.format, data: data.image };
+    }
+
+    const text = await result.text();
+    throw new Error(text);
+}
+
+/**
  * Generates an image using the OpenRouter API.
  * @param {string} prompt The main instruction used to guide the image generation.
  * @param {AbortSignal} signal An AbortSignal object that can be used to cancel the request.
@@ -5131,6 +5208,8 @@ function isValidState() {
             return secret_state[SECRET_KEYS.OPENROUTER];
         case sources.workersai:
             return !!oai_settings.workers_ai_account_id && secret_state[SECRET_KEYS.WORKERS_AI];
+        case sources.minimax:
+            return secret_state[SECRET_KEYS.MINIMAX];
         default:
             return false;
     }
@@ -5891,6 +5970,18 @@ export async function init() {
     });
     $('#sd_google_duration').on('input', function () {
         extension_settings.sd.google_duration = Number($(this).val());
+        saveSettingsDebounced();
+    });
+    $('#sd_minimax_endpoint').on('change', function () {
+        extension_settings.sd.minimax_endpoint = String($(this).val());
+        saveSettingsDebounced();
+    });
+    $('#sd_minimax_aspect_ratio').on('change', function () {
+        extension_settings.sd.minimax_aspect_ratio = String($(this).val());
+        saveSettingsDebounced();
+    });
+    $('#sd_minimax_prompt_optimizer').on('input', function () {
+        extension_settings.sd.minimax_prompt_optimizer = $(this).prop('checked');
         saveSettingsDebounced();
     });
     $('#sd_models_refresh').on('click', async () => {
