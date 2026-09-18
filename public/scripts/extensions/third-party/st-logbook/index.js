@@ -12,6 +12,9 @@ const IN_CHAT = 1;      // extension_prompt_types.IN_CHAT (public/script.js)
 const ROLE_SYSTEM = 0;  // extension_prompt_roles.SYSTEM
 const AI_OUTPUT = 2;    // regex_placement.AI_OUTPUT (regex/engine.js)
 
+// crypto.randomUUID is undefined on insecure origins (LAN IP / hostname access).
+const uuid = () => crypto.randomUUID?.() ?? `${MODULE}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
 const REGEX_TEMPLATES = [{
     scriptName: 'Logbook — strip GFX block',
     findRegex: '/<!-- GFX_START -->[\\s\\S]*?<!-- GFX_END -->/g',
@@ -46,7 +49,7 @@ function installRegexScripts() {
             es.regex.push(entry);
         }
         Object.assign(entry, {
-            id: entry.id ?? crypto.randomUUID(),
+            id: entry.id ?? uuid(),
             scriptName: tpl.scriptName,
             findRegex: tpl.findRegex,
             replaceString: '',
