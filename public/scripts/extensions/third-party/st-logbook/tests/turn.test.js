@@ -7,7 +7,7 @@ const logbook = { turn: 196, raw: '<!-- GFX_START -->…<!-- GFX_END -->', sourc
 test('buildInjection frames the logbook and announces next turn', () => {
     const text = buildInjection(logbook);
     assert.match(text, /\[LOGBOOK — authoritative game state as of Turn 196\./);
-    assert.match(text, /labeled Turn 197\]/);
+    assert.match(text, /labeled Turn 197\.\]/);
     assert.ok(text.includes('<!-- GFX_START -->'));
     assert.ok(text.includes('single source of truth'));
 });
