@@ -1,1 +1,43 @@
-/* st-logbook styles — placeholder, populated in Task 7 */
+/* st-logbook styles */
+
+.st-logbook-settings .inline-drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5em;
+    cursor: pointer;
+}
+
+.st-logbook-settings .inline-drawer-content {
+    margin-top: 0.5em;
+}
+
+.st-logbook-settings label {
+    display: block;
+    margin: 0.35em 0;
+}
+
+.st-logbook-settings .menu_button {
+    display: inline-block;
+    margin: 0.35em 0.35em 0.35em 0;
+    cursor: pointer;
+    width: auto;
+    padding: 0.25em 0.75em;
+}
+
+.st-logbook-hint {
+    opacity: 0.75;
+    font-size: 0.85em;
+    margin-top: 0.5em;
+}
+
+.st-logbook-state.warn {
+    color: #d4a017;
+    font-weight: bold;
+}
+
+.st-logbook-view code {
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-size: 0.8em;
+}

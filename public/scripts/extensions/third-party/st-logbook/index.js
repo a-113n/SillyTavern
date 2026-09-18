@@ -143,7 +143,39 @@ function onChatChanged() {
     bootstrap();
     lastError = null;
     inject();
+    syncStatus();
 }
+
+function syncStatus() {
+    const s = settings();
+    $('#st_logbook_enabled').prop('checked', s.enabled);
+    $('#st_logbook_depth').val(s.depth);
+    const lb = logbook();
+    $('.st-logbook-turn').text(lb ? lb.turn : '—');
+    const state = !lb ? 'dormant (no states detected)' : (lastError ?? 'ok');
+    $('.st-logbook-state').text(state).toggleClass('warn', !!lastError && !!lb);
+}
+
+const DRAWER_HTML = `
+<div class="st-logbook-settings">
+    <div class="inline-drawer">
+        <div class="inline-drawer-toggle inline-drawer-header">
+            <b>Logbook</b>
+            <div class="ta-right">
+                <span class="st-logbook-turn"></span> · <span class="st-logbook-state"></span>
+            </div>
+        </div>
+        <div class="inline-drawer-content">
+            <label><input id="st_logbook_enabled" type="checkbox"> <span>Enabled</span></label>
+            <label>Injection depth <input id="st_logbook_depth" type="number" min="0" max="16" step="1" class="text_pole" style="width:4em"></label>
+            <div>
+                <div class="menu_button" id="st_logbook_view">View logbook</div>
+                <div class="menu_button" id="st_logbook_reset">Reset from history</div>
+            </div>
+            <div class="st-logbook-hint">Stores the Internal States block in chat metadata and injects it at depth <span class="st-logbook-depth"></span>; strips states from prompt history.</div>
+        </div>
+    </div>
+</div>`;
 
 jQuery(() => {
     const { eventSource, eventTypes } = ctx();
@@ -152,7 +184,37 @@ jQuery(() => {
     eventSource.on(eventTypes.MESSAGE_RECEIVED, id => harvest(id));
     eventSource.on(eventTypes.MESSAGE_EDITED, id => harvest(id));
     eventSource.on(eventTypes.MESSAGE_SWIPED, id => harvest(id));
+    eventSource.on(eventTypes.MESSAGE_SWIPED, () => syncStatus());
     installRegexScripts();
     onChatChanged();
+
+    $('#extensions_settings2').append(DRAWER_HTML);
+    $('#st_logbook_enabled').on('input', function () {
+        settings().enabled = $(this).prop('checked');
+        ctx().saveSettingsDebounced();
+        installRegexScripts();
+        inject();
+        syncStatus();
+    });
+    $('#st_logbook_depth').on('input', function () {
+        settings().depth = Math.max(0, Math.min(16, Number($(this).val()) || 0));
+        ctx().saveSettingsDebounced();
+        inject();
+        $('.st-logbook-depth').text(settings().depth);
+    });
+    $('#st_logbook_view').on('click', async () => {
+        const lb = logbook();
+        const body = lb
+            ? `<div class="st-logbook-view"><code>${lb.raw.replace(/</g, '&lt;')}</code></div>`
+            : 'No logbook for this chat.';
+        await ctx().Popup.show.text('Logbook', body, { wide: true, large: true });
+    });
+    $('#st_logbook_reset').on('click', () => {
+        bootstrap(true);
+        inject();
+        syncStatus();
+        toastr.info('Logbook re-seeded from chat history');
+    });
+    syncStatus();
     console.debug(`[${MODULE}] ready`);
 });
