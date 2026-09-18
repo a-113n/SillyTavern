@@ -54,3 +54,14 @@
     text-shadow: none;
     display: block;
 }
+
+.st-logbook-edit textarea {
+    width: 100%;
+    min-height: 50dvh;
+    resize: vertical;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+    line-height: 1.45;
+    white-space: pre;
+    tab-size: 4;
+}

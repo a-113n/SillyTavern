@@ -11,6 +11,8 @@ const MODULE = 'st-logbook';
 const IN_CHAT = 1;      // extension_prompt_types.IN_CHAT (public/script.js)
 const ROLE_SYSTEM = 0;  // extension_prompt_roles.SYSTEM
 const AI_OUTPUT = 2;    // regex_placement.AI_OUTPUT (regex/engine.js)
+const POPUP_TYPE_CONFIRM = 2;        // POPUP_TYPE.CONFIRM (public/scripts/popup.js)
+const POPUP_RESULT_AFFIRMATIVE = 1;  // POPUP_RESULT.AFFIRMATIVE (public/scripts/popup.js)
 
 // crypto.randomUUID is undefined on insecure origins (LAN IP / hostname access).
 const uuid = () => crypto.randomUUID?.() ?? `${MODULE}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -173,6 +175,7 @@ const DRAWER_HTML = `
             <label>Injection depth <input id="st_logbook_depth" type="number" min="0" max="16" step="1" class="text_pole" style="width:4em"></label>
             <div>
                 <div class="menu_button" id="st_logbook_view">View logbook</div>
+                <div class="menu_button" id="st_logbook_edit">Edit</div>
                 <div class="menu_button" id="st_logbook_reset">Reset from history</div>
             </div>
             <div class="st-logbook-hint">Stores the Internal States block in chat metadata and injects it at depth <span class="st-logbook-depth"></span>; strips states from prompt history.</div>
@@ -211,6 +214,39 @@ jQuery(() => {
             ? `<div class="st-logbook-view"><code>${lb.raw.replace(/</g, '&lt;')}</code></div>`
             : 'No logbook for this chat.';
         await ctx().Popup.show.text('Logbook', body, { wide: true, large: true, allowVerticalScrolling: true });
+    });
+    $('#st_logbook_edit').on('click', async () => {
+        const lb = logbook();
+        if (!lb) {
+            toastr.warning('No logbook for this chat');
+            return;
+        }
+        const body = `<div class="st-logbook-edit">
+            <div class="st-logbook-hint">Edit the stored state directly. Must keep the GFX_START/GFX_END markers. The Turn label you leave here becomes the current turn.</div>
+            <textarea id="st_logbook_edit_area" class="text_pole textarea" rows="18" spellcheck="false">${lb.raw.replace(/</g, '&lt;')}</textarea>
+        </div>`;
+        const popup = new ctx().Popup(body, POPUP_TYPE_CONFIRM, '', { wide: true, large: true, allowVerticalScrolling: true, okButton: 'Save', cancelButton: 'Cancel' });
+        const result = await popup.show();
+        if (result !== POPUP_RESULT_AFFIRMATIVE) return;
+        const edited = String($('#st_logbook_edit_area').val() ?? '');
+        if (!edited.includes('<!-- GFX_START -->') || !edited.includes('<!-- GFX_END -->')) {
+            toastr.error('Logbook must keep the GFX_START / GFX_END markers — not saved');
+            return;
+        }
+        const turn = extractTurn(edited) ?? lb.turn;
+        const { chatMetadata, saveMetadataDebounced } = ctx();
+        chatMetadata.logbook = {
+            turn,
+            raw: edited.trim(),
+            sourceMesId: lb.sourceMesId,
+            contentHash: hash(edited),
+            updatedAt: Date.now(),
+        };
+        saveMetadataDebounced();
+        inject();
+        syncStatus();
+        lastError = null;
+        toastr.success(`Logbook saved (Turn ${turn})`);
     });
     $('#st_logbook_reset').on('click', () => {
         bootstrap(true);
