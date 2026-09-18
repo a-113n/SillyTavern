@@ -210,7 +210,7 @@ jQuery(() => {
         const body = lb
             ? `<div class="st-logbook-view"><code>${lb.raw.replace(/</g, '&lt;')}</code></div>`
             : 'No logbook for this chat.';
-        await ctx().Popup.show.text('Logbook', body, { wide: true, large: true });
+        await ctx().Popup.show.text('Logbook', body, { wide: true, large: true, allowVerticalScrolling: true });
     });
     $('#st_logbook_reset').on('click', () => {
         bootstrap(true);
