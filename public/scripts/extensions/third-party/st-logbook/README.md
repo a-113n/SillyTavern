@@ -42,11 +42,16 @@ Design doc: `docs/plans/2026-09-18-st-logbook-design.md`.
 
 - **Enabled** — master toggle (also disables the strip regex scripts).
 - **Injection depth** — default 0 (tail of chat history, system role).
-- **View logbook** — read-only popup of the stored state.
+- **View logbook** — read-only popup of the stored state (raw source, scrollable).
+- **Edit** — manual repair: edits the stored state directly. Must keep the
+  `GFX_START`/`GFX_END` markers; the `Turn:` label you leave becomes the current
+  turn. With **Pin** checked (default), later re-parses of the same message
+  (swipes/edits) won't overwrite your fix — the pin clears automatically on
+  the next new AI message.
 - **Reset from history** — re-seed the logbook from the newest valid block
   in chat history.
-- Status line: current turn + health (`ok`, `dormant`, or a warning like
-  `stored with missing sections: …`).
+- Status line: current turn + health (`ok`, `dormant`, `pinned`, or a warning
+  like `stored with missing sections: …`).
 
 ## Required preset patch
 
