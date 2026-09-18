@@ -31,3 +31,15 @@ export function nextTurnFrom(logbook) {
 export function isSameState(logbook, sourceMesId, contentHash) {
     return !!logbook && logbook.sourceMesId === sourceMesId && logbook.contentHash === contentHash;
 }
+
+/**
+ * Whether harvesting should proceed for a tail message under the current pin state.
+ * A pinned logbook (manual edit) suppresses re-parses of its own source message;
+ * any other message (a genuinely new turn) harvests normally and the new
+ * logbook object drops the pin implicitly.
+ */
+export function shouldHarvest(logbook, mesId) {
+    if (!logbook) return false;
+    if (logbook.pinned && mesId === logbook.sourceMesId) return false;
+    return true;
+}

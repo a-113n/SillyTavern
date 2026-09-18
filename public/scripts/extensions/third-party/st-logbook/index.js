@@ -5,7 +5,7 @@
 // authoritative logbook at in-chat depth 0 so the model reads state instead
 // of reconstructing it from its own past responses.
 import { extractStatesBlock, validateSections, extractTurn, renumberTurn } from './parser.js';
-import { buildInjection, nextTurnFrom, isSameState } from './turn.js';
+import { buildInjection, nextTurnFrom, isSameState, shouldHarvest } from './turn.js';
 
 const MODULE = 'st-logbook';
 const IN_CHAT = 1;      // extension_prompt_types.IN_CHAT (public/script.js)
@@ -119,6 +119,10 @@ function harvest(messageId) {
     const i = messageId ?? chat.length - 1;
     const m = chat[i];
     if (!m || m.is_user || i !== chat.length - 1) return;
+    if (!shouldHarvest(lb, i)) {
+        console.debug(`[${MODULE}] pinned manual edit — skipping harvest of message ${i}`);
+        return;
+    }
     const parsed = extractStatesBlock(String(m.mes ?? ''));
     if (!parsed) {
         lastError = 'tail message has no states block — logbook unchanged';
@@ -158,7 +162,7 @@ function syncStatus() {
     const lb = logbook();
     $('.st-logbook-turn').text(lb ? lb.turn : '—');
     const state = !lb ? 'dormant (no states detected)' : (lastError ?? 'ok');
-    $('.st-logbook-state').text(state).toggleClass('warn', !!lastError && !!lb);
+    $('.st-logbook-state').text(state + (lb?.pinned ? ' · pinned' : '')).toggleClass('warn', !!lastError && !!lb);
 }
 
 const DRAWER_HTML = `
@@ -224,6 +228,7 @@ jQuery(() => {
         const body = `<div class="st-logbook-edit">
             <div class="st-logbook-hint">Edit the stored state directly. Must keep the GFX_START/GFX_END markers. The Turn label you leave here becomes the current turn.</div>
             <textarea id="st_logbook_edit_area" class="text_pole textarea" rows="18" spellcheck="false">${lb.raw.replace(/</g, '&lt;')}</textarea>
+            <label><input id="st_logbook_edit_pin" type="checkbox" checked> <span>Pin this edit — ignore the original message if it is re-parsed (unpins automatically on the next new message)</span></label>
         </div>`;
         const popup = new ctx().Popup(body, POPUP_TYPE_CONFIRM, '', { wide: true, large: true, allowVerticalScrolling: true, okButton: 'Save', cancelButton: 'Cancel' });
         const result = await popup.show();
@@ -240,13 +245,14 @@ jQuery(() => {
             raw: edited.trim(),
             sourceMesId: lb.sourceMesId,
             contentHash: hash(edited),
+            pinned: $('#st_logbook_edit_pin').prop('checked'),
             updatedAt: Date.now(),
         };
         saveMetadataDebounced();
         inject();
         syncStatus();
         lastError = null;
-        toastr.success(`Logbook saved (Turn ${turn})`);
+        toastr.success(`Logbook saved (Turn ${turn}${$('#st_logbook_edit_pin').prop('checked') ? ', pinned' : ''})`);
     });
     $('#st_logbook_reset').on('click', () => {
         bootstrap(true);
