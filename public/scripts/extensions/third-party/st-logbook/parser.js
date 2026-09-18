@@ -57,3 +57,34 @@ export function validateSections(full) {
     }
     return { present, missing: [...SECTION_LABELS.values()].filter(n => !present.includes(n)) };
 }
+
+const TURN_RE = /INTERNAL STATES \(Turn:\s*(\d+)\)/;
+
+/**
+ * Read the turn number from a states payload's wrapper label.
+ * @param {string?} text
+ * @returns {number | null}
+ */
+export function extractTurn(text) {
+    if (typeof text !== 'string') return null;
+    const m = text.match(TURN_RE);
+    return m ? Number(m[1]) : null;
+}
+
+/**
+ * Force the wrapper's turn label to n; injects one when absent.
+ * @param {string} text
+ * @param {number} n
+ * @returns {string}
+ */
+export function renumberTurn(text, n) {
+    if (TURN_RE.test(text)) {
+        return text.replace(TURN_RE, `INTERNAL STATES (Turn: ${n})`);
+    }
+    // malformed parens group — empty or non-numeric label
+    if (/INTERNAL STATES \([^)]*\)/.test(text)) {
+        return text.replace(/INTERNAL STATES \([^)]*\)/, `INTERNAL STATES (Turn: ${n})`);
+    }
+    // no parens at all — insert after the wrapper title
+    return text.replace('INTERNAL STATES', `INTERNAL STATES (Turn: ${n})`);
+}

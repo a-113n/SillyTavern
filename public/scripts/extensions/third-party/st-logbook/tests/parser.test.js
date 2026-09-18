@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { extractStatesBlock, validateSections } from '../parser.js';
+import { extractStatesBlock, validateSections, extractTurn, renumberTurn } from '../parser.js';
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), 'fixtures');
 const realBlock = readFileSync(join(fixtures, 'bunker-real-block.html'), 'utf8');
@@ -101,4 +101,29 @@ test('validateSections tolerates whitespace after summary tag', () => {
         .replace('<summary>👤 NPC AGENDAS</summary>', '<summary> 👤 NPC AGENDAS </summary>');
     const inv = validateSections(extractStatesBlock(spaced).full);
     assert.ok(inv.present.includes('NPC AGENDAS'));
+});
+
+test('extractTurn reads the number from the summary label', () => {
+    assert.equal(extractTurn(realBlock), 196);
+    assert.equal(extractTurn(synthetic), 41);
+});
+
+test('extractTurn tolerates malformed and missing labels', () => {
+    assert.equal(extractTurn('🎬 INTERNAL STATES (Turn: twelve)'), null);
+    assert.equal(extractTurn('no label at all'), null);
+    assert.equal(extractTurn(null), null);
+});
+
+test('renumberTurn rewrites the label in place', () => {
+    const out = renumberTurn(synthetic, 42);
+    assert.match(out, /INTERNAL STATES \(Turn: 42\)/);
+    assert.ok(!out.includes('Turn: 41'));
+    // body untouched
+    assert.ok(out.includes('fix the radio'));
+});
+
+test('renumberTurn injects a label when missing', () => {
+    const noLabel = synthetic.replace('(Turn: 41) ', '');
+    const out = renumberTurn(noLabel, 7);
+    assert.match(out, /INTERNAL STATES \(Turn: 7\)/);
 });
