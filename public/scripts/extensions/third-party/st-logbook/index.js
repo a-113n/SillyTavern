@@ -230,7 +230,8 @@ jQuery(() => {
             <textarea id="st_logbook_edit_area" class="text_pole textarea" rows="18" spellcheck="false">${lb.raw.replace(/</g, '&lt;')}</textarea>
             <label><input id="st_logbook_edit_pin" type="checkbox" checked> <span>Pin this edit — ignore the original message if it is re-parsed (unpins automatically on the next new message)</span></label>
         </div>`;
-        const popup = new ctx().Popup(body, POPUP_TYPE_CONFIRM, '', { wide: true, large: true, allowVerticalScrolling: true, okButton: 'Save', cancelButton: 'Cancel' });
+        // NB: construct Popup, not ctx — `new ctx().Popup(...)` parses as (new ctx()).Popup and arrow fns can't be constructed
+        const popup = new (ctx().Popup)(body, POPUP_TYPE_CONFIRM, '', { wide: true, large: true, allowVerticalScrolling: true, okButton: 'Save', cancelButton: 'Cancel' });
         // capture references now: the dialog is removed from the DOM once it closes,
         // but detached nodes still carry their current value
         const $area = $(popup.content).find('#st_logbook_edit_area');
