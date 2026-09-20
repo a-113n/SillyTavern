@@ -111,26 +111,38 @@ function inject() {
  * Parse the tail AI message; update the logbook only on a valid block.
  * Tail-only parsing keeps the logbook monotonic (swiping older turns never rewinds state).
  */
-function harvest(messageId) {
+export function harvest(messageId) {
     if (!settings().enabled) return;
-    const lb = logbook();
-    if (!lb) return; // dormant chat
+    let lb = logbook();
+    if (!lb) {
+        // Dormant chat (e.g. greeting had no states): activate the moment the
+        // model first emits a block — message events must be able to seed the
+        // logbook, not only CHAT_CHANGED / a manual reset.
+        bootstrap();
+        lb = logbook();
+        if (!lb) return;
+    }
     const { chat, chatMetadata, saveMetadataDebounced } = ctx();
     const i = messageId ?? chat.length - 1;
     const m = chat[i];
     if (!m || m.is_user || i !== chat.length - 1) return;
     if (!shouldHarvest(lb, i)) {
         console.debug(`[${MODULE}] pinned manual edit — skipping harvest of message ${i}`);
+        syncStatus();
         return;
     }
     const parsed = extractStatesBlock(String(m.mes ?? ''));
     if (!parsed) {
         lastError = 'tail message has no states block — logbook unchanged';
         console.warn(`[${MODULE}] ${lastError}`);
+        syncStatus();
         return;
     }
     const h = hash(parsed.full);
-    if (isSameState(lb, i, h)) return;
+    if (isSameState(lb, i, h)) {
+        syncStatus(); // display may still show pre-activation state
+        return;
+    }
     const next = nextTurnFor(lb, i);
     chatMetadata.logbook = {
         turn: next,
@@ -146,6 +158,7 @@ function harvest(messageId) {
     if (lastError) console.warn(`[${MODULE}] ${lastError}`);
     saveMetadataDebounced();
     inject();
+    syncStatus();
 }
 
 function onChatChanged() {
