@@ -697,7 +697,7 @@
                                         </span>
                                     </div>
                                 </div>
-                                <div class="range-block" data-source="openai,claude,aimlapi,openrouter,ai21,makersuite,vertexai,mistralai,custom,cohere,perplexity,groq,siliconflow,minimax,electronhub,chutes,nanogpt,deepseek,xai,pollinations,moonshot,fireworks,cometapi,azure_openai,zai,workers_ai">
+                                <div class="range-block" data-source="openai,claude,aimlapi,openrouter,ai21,makersuite,vertexai,mistralai,custom,cohere,perplexity,groq,siliconflow,minimax,electronhub,chutes,nanogpt,deepseek,xai,pollinations,moonshot,fireworks,cometapi,azure_openai,zai,workers_ai,ollama">
                                     <div class="range-block-title" data-i18n="Temperature">
                                         Temperature
                                     </div>
@@ -749,7 +749,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="range-block" data-source="openai,claude,aimlapi,openrouter,ai21,makersuite,vertexai,mistralai,custom,cohere,perplexity,groq,siliconflow,minimax,electronhub,chutes,nanogpt,deepseek,xai,pollinations,moonshot,fireworks,cometapi,azure_openai,zai,workers_ai">
+                                <div class="range-block" data-source="openai,claude,aimlapi,openrouter,ai21,makersuite,vertexai,mistralai,custom,cohere,perplexity,groq,siliconflow,minimax,electronhub,chutes,nanogpt,deepseek,xai,pollinations,moonshot,fireworks,cometapi,azure_openai,zai,workers_ai,ollama">
                                     <div class="range-block-title" data-i18n="Top P">
                                         Top P
                                     </div>
@@ -2000,7 +2000,7 @@
                                             </b>
                                         </div>
                                     </div>
-                                    <div class="range-block" data-source="openai,cohere,mistralai,custom,claude,aimlapi,openrouter,groq,siliconflow,minimax,deepseek,makersuite,vertexai,ai21,xai,pollinations,moonshot,fireworks,cometapi,electronhub,chutes,azure_openai,zai,nanogpt,workers_ai">
+                                    <div class="range-block" data-source="openai,cohere,mistralai,custom,claude,aimlapi,openrouter,groq,siliconflow,minimax,deepseek,makersuite,vertexai,ai21,xai,pollinations,moonshot,fireworks,cometapi,electronhub,chutes,azure_openai,zai,nanogpt,workers_ai,ollama">
                                         <label for="openai_function_calling" class="checkbox_label flexWrap widthFreeExpand">
                                             <input id="openai_function_calling" type="checkbox" />
                                             <span data-i18n="Enable function calling">Enable function calling</span>
@@ -2931,6 +2931,7 @@
                                 <option value="chutes">Chutes</option>
                                 <option value="claude">Claude</option>
                                 <option value="workers_ai">Cloudflare Workers AI</option>
+                                <option value="ollama">Ollama</option>
                                 <option value="cohere">Cohere</option>
                                 <!-- Temporarily disabled. -->
                                 <!-- <option value="cometapi">CometAPI</option> -->
@@ -3599,6 +3600,27 @@
                                 <option value="MiniMax-M2">MiniMax-M2</option>
                                 <option value="M2-her">M2-her</option>
                             </select>
+                        </div>
+                        <div id="ollama_form" data-source="ollama">
+                            <h4 data-i18n="Ollama URL">Ollama URL</h4>
+                            <input id="ollama_url" class="text_pole wide100p" value="" autocomplete="off" data-i18n="[placeholder]Example: http://127.0.0.1:11434/v1" placeholder="Example: http://127.0.0.1:11434/v1">
+                            <div class="neutral_warning" data-i18n="Ollama truncates prompts to the model's context window. Raise it on the server (e.g. OLLAMA_CONTEXT_LENGTH) if needed.">
+                                Ollama truncates prompts to the model's context window. Raise it on the server (e.g. OLLAMA_CONTEXT_LENGTH) if needed.
+                            </div>
+                            <h4 data-i18n="Ollama API Key (optional)">Ollama API Key (optional)</h4>
+                            <div class="flex-container">
+                                <input id="api_key_ollama" name="api_key_ollama" class="text_pole flex1" value="" type="text" autocomplete="off">
+                                <div title="Manage API keys" data-i18n="[title]Manage API keys" class="menu_button fa-solid fa-key fa-fw manage-api-keys" data-key="api_key_ollama"></div>
+                            </div>
+                            <div data-for="api_key_ollama" class="neutral_warning" data-i18n="Only needed for authenticated proxies or Ollama cloud. Leave empty for a local server.">
+                                Only needed for authenticated proxies or Ollama cloud. Leave empty for a local server.
+                            </div>
+                            <div>
+                                <h4 data-i18n="Ollama Model">Ollama Model</h4>
+                                <select id="model_ollama_select">
+                                    <option value="" data-i18n="-- Connect to the API --">-- Connect to the API --</option>
+                                </select>
+                            </div>
                         </div>
                         <div id="electronhub_form" data-source="electronhub">
                             <h4 data-i18n="Electron Hub API Key">Electron Hub API Key</h4>

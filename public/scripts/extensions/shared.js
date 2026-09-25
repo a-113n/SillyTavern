@@ -454,6 +454,7 @@ export class ConnectionManagerRequestService {
                         siliconflow_endpoint: profile['api-url'],
                         minimax_endpoint: profile['api-url'],
                         pollinations_endpoint: profile['api-url'],
+                        ollama_url: profile['api-url'],
                         reverse_proxy: proxyPreset?.url,
                         proxy_password: proxyPreset?.password,
                         custom_prompt_post_processing: profile['prompt-post-processing'],

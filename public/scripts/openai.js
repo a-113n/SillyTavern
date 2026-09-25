@@ -201,6 +201,7 @@ export const chat_completion_sources = {
     SILICONFLOW: 'siliconflow',
     WORKERS_AI: 'workers_ai',
     MINIMAX: 'minimax',
+    OLLAMA: 'ollama',
 };
 
 const character_names_behavior = {
@@ -358,6 +359,8 @@ export const settingsToUpdate = {
     zai_endpoint: ['#zai_endpoint', 'zai_endpoint', false, true],
     workers_ai_model: ['#model_workers_ai_select', 'workers_ai_model', false, true],
     workers_ai_account_id: ['#workers_ai_account_id', 'workers_ai_account_id', false, true],
+    ollama_model: ['#model_ollama_select', 'ollama_model', false, true],
+    ollama_url: ['#ollama_url', 'ollama_url', false, true],
     openai_max_context: ['#openai_max_context', 'openai_max_context', false, false],
     openai_max_tokens: ['#openai_max_tokens', 'openai_max_tokens', false, false],
     names_behavior: ['#names_behavior', 'names_behavior', false, false],
@@ -467,6 +470,8 @@ const default_settings = {
     zai_endpoint: ZAI_ENDPOINT.COMMON,
     workers_ai_model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast',
     workers_ai_account_id: '',
+    ollama_model: '',
+    ollama_url: 'http://127.0.0.1:11434/v1',
     azure_base_url: '',
     azure_deployment_name: '',
     azure_api_version: '2024-02-15-preview',
@@ -1737,6 +1742,8 @@ export function getChatCompletionModel(settings = null) {
             return settings.ai21_model;
         case chat_completion_sources.MISTRALAI:
             return settings.mistralai_model;
+        case chat_completion_sources.OLLAMA:
+            return settings.ollama_model;
         case chat_completion_sources.CUSTOM:
             return settings.custom_model;
         case chat_completion_sources.COHERE:
@@ -2078,6 +2085,22 @@ function saveModelList(data) {
 
         if (!oai_settings.custom_model && model_list.length > 0) {
             $('#model_custom_select').val(model_list[0].id).trigger('change');
+        }
+    }
+
+    if (oai_settings.chat_completion_source == chat_completion_sources.OLLAMA) {
+        $('#model_ollama_select').empty();
+        model_list.forEach((model) => {
+            $('#model_ollama_select').append(
+                $('<option>', {
+                    value: model.id,
+                    text: model.id,
+                    selected: model.id == oai_settings.ollama_model,
+                }));
+        });
+
+        if (!oai_settings.ollama_model && model_list.length > 0) {
+            $('#model_ollama_select').val(model_list[0].id).trigger('change');
         }
     }
 
@@ -3012,6 +3035,10 @@ export async function createGenerationParameters(settings, model, type, messages
         if (Number.isFinite(generate_data.temperature)) {
             generate_data.temperature = clamp(generate_data.temperature, Number.EPSILON, 1.0);
         }
+    }
+
+    if (settings.chat_completion_source === chat_completion_sources.OLLAMA) {
+        generate_data.ollama_url = settings.ollama_url || 'http://127.0.0.1:11434/v1';
     }
 
     if (settings.chat_completion_source === chat_completion_sources.WORKERS_AI) {
@@ -4525,6 +4552,11 @@ async function getStatusOpen() {
         data.minimax_endpoint = oai_settings.minimax_endpoint;
     }
 
+    if (oai_settings.chat_completion_source === chat_completion_sources.OLLAMA) {
+        $('#model_ollama_select').empty();
+        data.ollama_url = oai_settings.ollama_url || 'http://127.0.0.1:11434/v1';
+    }
+
     if (oai_settings.chat_completion_source === chat_completion_sources.WORKERS_AI) {
         data.workers_ai_account_id = oai_settings.workers_ai_account_id;
     }
@@ -5615,6 +5647,16 @@ async function onModelChange() {
         oai_settings.deepseek_model = value;
     }
 
+    if ($(this).is('#model_ollama_select')) {
+        if (!value) {
+            console.debug('Null Ollama model selected. Ignoring.');
+            return;
+        }
+
+        console.log('Ollama model changed to', value);
+        oai_settings.ollama_model = value;
+    }
+
     if (value && $(this).is('#model_custom_select')) {
         console.log('Custom model changed to', value);
         oai_settings.custom_model = value;
@@ -6063,6 +6105,7 @@ async function onConnectButtonClick(e) {
         [chat_completion_sources.CHUTES]: { key: SECRET_KEYS.CHUTES, selector: '#api_key_chutes', proxy: false },
         [chat_completion_sources.POLLINATIONS]: { key: SECRET_KEYS.POLLINATIONS, selector: '#api_key_pollinations', proxy: false, keyless: oai_settings.pollinations_endpoint === POLLINATIONS_ENDPOINT.ANONYMOUS },
         [chat_completion_sources.WORKERS_AI]: { key: SECRET_KEYS.WORKERS_AI, selector: '#api_key_workers_ai', proxy: false },
+        [chat_completion_sources.OLLAMA]: { key: SECRET_KEYS.OLLAMA, selector: '#api_key_ollama', proxy: false, keyless: true },
         [chat_completion_sources.MINIMAX]: { key: SECRET_KEYS.MINIMAX, selector: '#api_key_minimax', proxy: false },
     };
 
@@ -6131,6 +6174,8 @@ function toggleChatCompletionForms() {
         $('#model_siliconflow_select').trigger('change');
     } else if (oai_settings.chat_completion_source == chat_completion_sources.MINIMAX) {
         $('#model_minimax_select').trigger('change');
+    } else if (oai_settings.chat_completion_source == chat_completion_sources.OLLAMA) {
+        $('#model_ollama_select').trigger('change');
     } else if (oai_settings.chat_completion_source == chat_completion_sources.ELECTRONHUB) {
         $('#model_electronhub_select').trigger('change');
     } else if (oai_settings.chat_completion_source == chat_completion_sources.NANOGPT) {
@@ -6326,6 +6371,9 @@ export function isImageInliningSupported() {
             return (Array.isArray(model_list) && model_list.find(m => m.id === oai_settings.mistralai_model)?.capabilities?.vision);
         case chat_completion_sources.COHERE:
             return visionSupportedModels.some(model => oai_settings.cohere_model.includes(model));
+        case chat_completion_sources.OLLAMA:
+            // Common Ollama vision-capable model families (model id is `<family>[:<tag>]`).
+            return /(^|[\/:\-])(llava|bakllava|moondream|minicpm-v|llama3\.2-vision|llama4|qvq|qwen[\d.]*-?vl|gemma3:(4b|12b|27b)|granite3\.\d-vision|pixtral|mistral-small3\.[12])/i.test(oai_settings.ollama_model ?? '');
         case chat_completion_sources.XAI:
             // TODO: xAI's /models endpoint doesn't return modality info
             return visionSupportedModels.some(model => oai_settings.xai_model.includes(model));
@@ -7353,6 +7401,10 @@ export function initOpenAI() {
         oai_settings.workers_ai_account_id = String($(this).val());
         saveSettingsDebounced();
     });
+    $('#ollama_url').on('input', function () {
+        oai_settings.ollama_url = String($(this).val());
+        saveSettingsDebounced();
+    });
     $('#vertexai_service_account_json').on('input', onVertexAIServiceAccountJsonChange);
     $('#vertexai_validate_service_account').on('click', onVertexAIValidateServiceAccount);
     $('#vertexai_clear_service_account').on('click', onVertexAIClearServiceAccount);
@@ -7365,6 +7417,7 @@ export function initOpenAI() {
     $('#model_chutes_select').on('change', onModelChange);
     $('#model_siliconflow_select').on('change', onModelChange);
     $('#model_minimax_select').on('change', onModelChange);
+    $('#model_ollama_select').on('change', onModelChange);
     $('#model_electronhub_select').on('change', onModelChange);
     $('#model_nanogpt_select').on('change', onModelChange);
     $('#model_deepseek_select').on('change', onModelChange);

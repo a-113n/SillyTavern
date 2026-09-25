@@ -97,6 +97,7 @@ const API_SILICONFLOW = 'https://api.siliconflow.com/v1';
 const API_SILICONFLOW_CN = 'https://api.siliconflow.cn/v1';
 const API_MINIMAX = 'https://api.minimax.io/v1';
 const API_MINIMAX_CN = 'https://api.minimaxi.com/v1';
+const API_OLLAMA = 'http://127.0.0.1:11434/v1';
 const API_OPENROUTER = 'https://openrouter.ai/api/v1';
 const API_WORKERS_AI = 'https://api.cloudflare.com/client/v4/accounts';
 
@@ -1802,6 +1803,10 @@ router.post('/status', async function (request, statusResponse) {
             apiKey = readSecret(request.user.directories, SECRET_KEYS.CUSTOM, request.body.secret_id);
             headers = {};
             mergeObjectWithYaml(headers, request.body.custom_include_headers);
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OLLAMA) {
+            apiUrl = request.body.ollama_url || API_OLLAMA;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.OLLAMA, request.body.secret_id) || '';
+            headers = {};
         } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.COHERE) {
             apiUrl = API_COHERE_V1;
             apiKey = readSecret(request.user.directories, SECRET_KEYS.COHERE, request.body.secret_id);
@@ -2064,7 +2069,7 @@ router.post('/status', async function (request, statusResponse) {
             return statusResponse.status(400).send({ error: true });
         }
 
-        if (!apiKey && !request.body.reverse_proxy && request.body.chat_completion_source !== CHAT_COMPLETION_SOURCES.CUSTOM) {
+        if (!apiKey && !request.body.reverse_proxy && ![CHAT_COMPLETION_SOURCES.CUSTOM, CHAT_COMPLETION_SOURCES.OLLAMA].includes(request.body.chat_completion_source)) {
             console.warn('Chat Completion API key is missing.');
             return statusResponse.status(400).send({ error: true });
         }
@@ -2419,6 +2424,13 @@ router.post('/generate', async function (request, response) {
                     },
                 };
             }
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OLLAMA) {
+            // Local Ollama server (OpenAI-compatible API). API key is optional
+            // and only sent if configured (e.g. authenticated proxy or Ollama cloud).
+            apiUrl = request.body.ollama_url || API_OLLAMA;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.OLLAMA, request.body.secret_id) || '';
+            headers = {};
+            bodyParams = {};
         } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.PERPLEXITY) {
             apiUrl = API_PERPLEXITY;
             apiKey = readSecret(request.user.directories, SECRET_KEYS.PERPLEXITY, request.body.secret_id);
@@ -2612,7 +2624,7 @@ router.post('/generate', async function (request, response) {
             }
         }
 
-        if (!apiKey && !request.body.reverse_proxy && request.body.chat_completion_source !== CHAT_COMPLETION_SOURCES.CUSTOM) {
+        if (!apiKey && !request.body.reverse_proxy && ![CHAT_COMPLETION_SOURCES.CUSTOM, CHAT_COMPLETION_SOURCES.OLLAMA].includes(request.body.chat_completion_source)) {
             console.warn('OpenAI API key is missing.');
             return response.status(400).send({ error: true });
         }

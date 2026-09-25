@@ -1,5 +1,5 @@
 import { Fuse, DOMPurify } from '../lib.js';
-import { canUseNegativeLookbehind, copyText, findPersona, flashHighlight, resolveAvatarData } from './utils.js';
+import { canUseNegativeLookbehind, copyText, findPersona, flashHighlight, isValidUrl, resolveAvatarData } from './utils.js';
 
 import {
     Generate,
@@ -3170,7 +3170,7 @@ export function initDefaultSlashCommands() {
                 ${t`If a manual API is provided to <b>set</b> the URL, make sure to set <code>connect=false</code>, as auto-connect only works for the currently selected API, or consider switching to it with <code>/api</code> first.`}
             </div>
             <div>
-                ${t`This slash command works for most of the Text Completion sources, KoboldAI Classic, and also Custom OpenAI compatible, Z.AI, SiliconFlow, MiniMax, Pollinations, and Google Vertex AI for the Chat Completion sources. If unsure which APIs are supported, check the auto-completion of the optional <code>api</code> argument of this command.`}
+                ${t`This slash command works for most of the Text Completion sources, KoboldAI Classic, and also Custom OpenAI compatible, Z.AI, SiliconFlow, MiniMax, Pollinations, Ollama, and Google Vertex AI for the Chat Completion sources. If unsure which APIs are supported, check the auto-completion of the optional <code>api</code> argument of this command.`}
             </div>
         `,
     }));

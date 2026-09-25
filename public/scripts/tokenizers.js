@@ -597,6 +597,20 @@ export function getTokenizerModel() {
         return deepseekTokenizer;
     }
 
+    // Ollama serves many model families; map common ones to the closest tokenizer
+    // for a reasonable estimate, falling back to a coarse OpenAI estimate.
+    if (oai_settings.chat_completion_source == chat_completion_sources.OLLAMA) {
+        const model = oai_settings.ollama_model || '';
+        if (/gemma/i.test(model)) return gemmaTokenizer;
+        if (/qwen|qvq/i.test(model)) return qwen2Tokenizer;
+        if (/mistral|mixtral|codestral/i.test(model)) return mistralTokenizer;
+        if (/deepseek/i.test(model)) return deepseekTokenizer;
+        if (/yi/i.test(model)) return yiTokenizer;
+        if (/llama3|llama4|llava|dolphin/i.test(model)) return llama3Tokenizer;
+        if (/llama/i.test(model)) return llamaTokenizer;
+        return turboTokenizer;
+    }
+
     // And for OpenRouter (if not a site model, then it's impossible to determine the tokenizer)
     if (main_api == 'openai' && oai_settings.chat_completion_source == chat_completion_sources.OPENROUTER && oai_settings.openrouter_model ||
         main_api == 'textgenerationwebui' && textgen_settings.type === textgen_types.OPENROUTER && textgen_settings.openrouter_model) {
