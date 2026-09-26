@@ -318,19 +318,48 @@ async function getIndex(directories, collectionId, source, sourceSettings) {
  * @param {{ hash: number; text: string; index: number; }[]} items - The items to insert
  */
 async function insertVectorItems(directories, collectionId, source, sourceSettings, items) {
-    const store = await getIndex(directories, collectionId, source, sourceSettings);
+    let store;
+    try {
+        store = await getIndex(directories, collectionId, source, sourceSettings);
+    } catch (error) {
+        console.error(`Vector insert: Failed to get index for collection ${collectionId}:`, error);
+        throw error;
+    }
 
-    await store.beginUpdate();
+    try {
+        await store.beginUpdate();
+    } catch (error) {
+        console.error(`Vector insert: Failed to begin update for collection ${collectionId}:`, error);
+        throw error;
+    }
 
-    const vectors = await getBatchVector(source, sourceSettings, items.map(x => x.text), false, directories);
+    let vectors;
+    try {
+        vectors = await getBatchVector(source, sourceSettings, items.map(x => x.text), false, directories);
+    } catch (error) {
+        console.error(`Vector insert: Failed to get embeddings for collection ${collectionId}:`, error);
+        try { store.cancelUpdate(); } catch { /* ignore */ }
+        throw error;
+    }
 
     for (let i = 0; i < items.length; i++) {
         const item = items[i];
         const vector = vectors[i];
-        await store.upsertItem({ vector: vector, metadata: { hash: item.hash, text: item.text, index: item.index } });
+        try {
+            await store.upsertItem({ vector: vector, metadata: { hash: item.hash, text: item.text, index: item.index } });
+        } catch (error) {
+            console.error(`Vector insert: Failed to upsert item ${i} for collection ${collectionId}:`, error);
+            try { store.cancelUpdate(); } catch { /* ignore */ }
+            throw error;
+        }
     }
 
-    await store.endUpdate();
+    try {
+        await store.endUpdate();
+    } catch (error) {
+        console.error(`Vector insert: Failed to end update for collection ${collectionId}:`, error);
+        throw error;
+    }
 }
 
 /**

@@ -80,6 +80,8 @@ export const SECRET_KEYS = {
     VOLCENGINE_ACCESS_KEY: 'volcengine_access_key',
     WORKERS_AI: 'api_key_workers_ai',
     OLLAMA: 'api_key_ollama',
+    OPENCODE_ZEN: 'api_key_opencode_zen',
+    NVIDIA_NIM: 'api_key_nvidia_nim',
 };
 
 const FRIENDLY_NAMES = {
@@ -146,6 +148,8 @@ const FRIENDLY_NAMES = {
     [SECRET_KEYS.VOLCENGINE_ACCESS_KEY]: 'Volcengine Access Key',
     [SECRET_KEYS.WORKERS_AI]: 'Cloudflare Workers AI',
     [SECRET_KEYS.OLLAMA]: 'Ollama',
+    [SECRET_KEYS.OPENCODE_ZEN]: 'OpenCode Zen',
+    [SECRET_KEYS.NVIDIA_NIM]: 'Nvidia NIM (build.nvidia.com)',
 };
 
 const INPUT_MAP = {
@@ -192,6 +196,8 @@ const INPUT_MAP = {
     [SECRET_KEYS.POLLINATIONS]: '#api_key_pollinations',
     [SECRET_KEYS.WORKERS_AI]: '#api_key_workers_ai',
     [SECRET_KEYS.OLLAMA]: '#api_key_ollama',
+    [SECRET_KEYS.OPENCODE_ZEN]: '#api_key_opencode_zen',
+    [SECRET_KEYS.NVIDIA_NIM]: '#api_key_nvidia_nim',
 };
 
 const getLabel = () => moment().format('L LT');

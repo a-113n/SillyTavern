@@ -51,6 +51,7 @@ const OPENROUTER_PROVIDERS = [
     'Cohere',
     'Crucible',
     'Crusoe',
+    'Decart',
     'DeepInfra',
     'DeepSeek',
     'DekaLLM',

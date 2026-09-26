@@ -71,6 +71,8 @@ export const SECRET_KEYS = {
     VOLCENGINE_ACCESS_KEY: 'volcengine_access_key',
     WORKERS_AI: 'api_key_workers_ai',
     OLLAMA: 'api_key_ollama',
+    OPENCODE_ZEN: 'api_key_opencode_zen',
+    NVIDIA_NIM: 'api_key_nvidia_nim',
 };
 
 /**

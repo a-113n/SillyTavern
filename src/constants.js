@@ -212,6 +212,8 @@ export const CHAT_COMPLETION_SOURCES = {
     MINIMAX: 'minimax',
     WORKERS_AI: 'workers_ai',
     OLLAMA: 'ollama',
+    OPENCODE_ZEN: 'opencode_zen',
+    NVIDIA_NIM: 'nvidia_nim',
 };
 
 /**

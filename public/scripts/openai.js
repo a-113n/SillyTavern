@@ -202,6 +202,8 @@ export const chat_completion_sources = {
     WORKERS_AI: 'workers_ai',
     MINIMAX: 'minimax',
     OLLAMA: 'ollama',
+    OPENCODE_ZEN: 'opencode_zen',
+    NVIDIA_NIM: 'nvidia_nim',
 };
 
 const character_names_behavior = {
@@ -361,6 +363,8 @@ export const settingsToUpdate = {
     workers_ai_account_id: ['#workers_ai_account_id', 'workers_ai_account_id', false, true],
     ollama_model: ['#model_ollama_select', 'ollama_model', false, true],
     ollama_url: ['#ollama_url', 'ollama_url', false, true],
+    opencode_zen_model: ['#model_opencode_zen_select', 'opencode_zen_model', false, true],
+    nvidia_nim_model: ['#model_nvidia_nim_select', 'nvidia_nim_model', false, true],
     openai_max_context: ['#openai_max_context', 'openai_max_context', false, false],
     openai_max_tokens: ['#openai_max_tokens', 'openai_max_tokens', false, false],
     names_behavior: ['#names_behavior', 'names_behavior', false, false],
@@ -472,6 +476,8 @@ const default_settings = {
     workers_ai_account_id: '',
     ollama_model: '',
     ollama_url: 'http://127.0.0.1:11434/v1',
+    opencode_zen_model: '',
+    nvidia_nim_model: '',
     azure_base_url: '',
     azure_deployment_name: '',
     azure_api_version: '2024-02-15-preview',
@@ -1782,6 +1788,10 @@ export function getChatCompletionModel(settings = null) {
             return settings.zai_model;
         case chat_completion_sources.WORKERS_AI:
             return settings.workers_ai_model;
+        case chat_completion_sources.OPENCODE_ZEN:
+            return settings.opencode_zen_model;
+        case chat_completion_sources.NVIDIA_NIM:
+            return settings.nvidia_nim_model;
         default:
             console.error(`Unknown chat completion source: ${source}`);
             return '';
@@ -2324,6 +2334,42 @@ function saveModelList(data) {
         }
 
         $('#model_siliconflow_select').val(oai_settings.siliconflow_model).trigger('change');
+    }
+
+    if (oai_settings.chat_completion_source === chat_completion_sources.OPENCODE_ZEN) {
+        $('#model_opencode_zen_select').empty();
+        model_list.forEach((model) => {
+            $('#model_opencode_zen_select').append(
+                $('<option>', {
+                    value: model.id,
+                    text: model.id,
+                }));
+        });
+
+        const selectedModel = model_list.find(model => model.id === oai_settings.opencode_zen_model);
+        if (model_list.length > 0 && (!selectedModel || !oai_settings.opencode_zen_model)) {
+            oai_settings.opencode_zen_model = model_list[0].id;
+        }
+
+        $('#model_opencode_zen_select').val(oai_settings.opencode_zen_model).trigger('change');
+    }
+
+    if (oai_settings.chat_completion_source === chat_completion_sources.NVIDIA_NIM) {
+        $('#model_nvidia_nim_select').empty();
+        model_list.forEach((model) => {
+            $('#model_nvidia_nim_select').append(
+                $('<option>', {
+                    value: model.id,
+                    text: model.id,
+                }));
+        });
+
+        const selectedModel = model_list.find(model => model.id === oai_settings.nvidia_nim_model);
+        if (model_list.length > 0 && (!selectedModel || !oai_settings.nvidia_nim_model)) {
+            oai_settings.nvidia_nim_model = model_list[0].id;
+        }
+
+        $('#model_nvidia_nim_select').val(oai_settings.nvidia_nim_model).trigger('change');
     }
 
     if (oai_settings.chat_completion_source === chat_completion_sources.FIREWORKS) {
@@ -5296,6 +5342,7 @@ function getZaiMaxContext(model, isUnlocked) {
     const contextMap = {
         'glm-5.3': max_1mil,
         'glm-5.2': max_1mil,
+        'glm-5.3-flash': max_1mil,
         'glm-5.1': max_200k,
         'glm-5-turbo': max_200k,
         'glm-5v-turbo': max_200k,
@@ -5735,6 +5782,24 @@ async function onModelChange() {
         oai_settings.workers_ai_model = value;
     }
 
+    if ($(this).is('#model_opencode_zen_select')) {
+        if (!value) {
+            console.debug('Null OpenCode Zen model selected. Ignoring.');
+            return;
+        }
+        console.log('OpenCode Zen model changed to', value);
+        oai_settings.opencode_zen_model = value;
+    }
+
+    if ($(this).is('#model_nvidia_nim_select')) {
+        if (!value) {
+            console.debug('Null Nvidia NIM model selected. Ignoring.');
+            return;
+        }
+        console.log('Nvidia NIM model changed to', value);
+        oai_settings.nvidia_nim_model = value;
+    }
+
     if ([chat_completion_sources.MAKERSUITE, chat_completion_sources.VERTEXAI].includes(oai_settings.chat_completion_source)) {
         const contextSize = getGeminiMaxContext(value, oai_settings.max_context_unlocked);
         const maxTemp = getGeminiMaxTemp(value);
@@ -6107,6 +6172,8 @@ async function onConnectButtonClick(e) {
         [chat_completion_sources.WORKERS_AI]: { key: SECRET_KEYS.WORKERS_AI, selector: '#api_key_workers_ai', proxy: false },
         [chat_completion_sources.OLLAMA]: { key: SECRET_KEYS.OLLAMA, selector: '#api_key_ollama', proxy: false, keyless: true },
         [chat_completion_sources.MINIMAX]: { key: SECRET_KEYS.MINIMAX, selector: '#api_key_minimax', proxy: false },
+        [chat_completion_sources.OPENCODE_ZEN]: { key: SECRET_KEYS.OPENCODE_ZEN, selector: '#api_key_opencode_zen', proxy: false },
+        [chat_completion_sources.NVIDIA_NIM]: { key: SECRET_KEYS.NVIDIA_NIM, selector: '#api_key_nvidia_nim', proxy: false },
     };
 
     // Vertex AI Express version - use API key
@@ -6203,6 +6270,10 @@ function toggleChatCompletionForms() {
         $('#model_zai_select').trigger('change');
     } else if (oai_settings.chat_completion_source == chat_completion_sources.WORKERS_AI) {
         $('#model_workers_ai_select').trigger('change');
+    } else if (oai_settings.chat_completion_source == chat_completion_sources.OPENCODE_ZEN) {
+        $('#model_opencode_zen_select').trigger('change');
+    } else if (oai_settings.chat_completion_source == chat_completion_sources.NVIDIA_NIM) {
+        $('#model_nvidia_nim_select').trigger('change');
     }
 
     $('[data-source]').each(function () {

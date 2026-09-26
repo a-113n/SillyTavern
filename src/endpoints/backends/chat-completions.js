@@ -100,6 +100,8 @@ const API_MINIMAX_CN = 'https://api.minimaxi.com/v1';
 const API_OLLAMA = 'http://127.0.0.1:11434/v1';
 const API_OPENROUTER = 'https://openrouter.ai/api/v1';
 const API_WORKERS_AI = 'https://api.cloudflare.com/client/v4/accounts';
+const API_OPENCODE_ZEN = 'https://opencode.ai/zen/v1';
+const API_NVIDIA_NIM = 'https://integrate.api.nvidia.com/v1';
 
 /**
  * Module-scoped Claude caching configuration values.
@@ -1910,6 +1912,16 @@ router.post('/status', async function (request, statusResponse) {
                 console.error('Error fetching Fireworks models:', error);
                 return statusResponse.send({ error: true, data: { data: [] } });
             }
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OPENCODE_ZEN) {
+            apiUrl = API_OPENCODE_ZEN;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.OPENCODE_ZEN, request.body.secret_id);
+            headers = {};
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.NVIDIA_NIM) {
+            apiUrl = API_NVIDIA_NIM;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.NVIDIA_NIM, request.body.secret_id);
+            headers = {
+                'Accept': request.body.stream ? 'text/event-stream' : 'application/json',
+            };
         } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.MAKERSUITE) {
             apiKey = request.body.reverse_proxy ? request.body.proxy_password : readSecret(request.user.directories, SECRET_KEYS.MAKERSUITE, request.body.secret_id);
             apiUrl = trimTrailingSlash(request.body.reverse_proxy || API_MAKERSUITE);
@@ -2585,6 +2597,18 @@ router.post('/generate', async function (request, response) {
             if (request.body.json_schema) {
                 setJsonObjectFormat(bodyParams, request.body.messages, request.body.json_schema);
             }
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.OPENCODE_ZEN) {
+            apiUrl = API_OPENCODE_ZEN;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.OPENCODE_ZEN, request.body.secret_id);
+            headers = {};
+            bodyParams = {};
+        } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.NVIDIA_NIM) {
+            apiUrl = API_NVIDIA_NIM;
+            apiKey = readSecret(request.user.directories, SECRET_KEYS.NVIDIA_NIM, request.body.secret_id);
+            headers = {
+                'Accept': request.body.stream ? 'text/event-stream' : 'application/json',
+            };
+            bodyParams = {};
         } else if (request.body.chat_completion_source === CHAT_COMPLETION_SOURCES.WORKERS_AI) {
             apiKey = readSecret(request.user.directories, SECRET_KEYS.WORKERS_AI, request.body.secret_id);
             const accountId = String(request.body.workers_ai_account_id || '').trim();
@@ -2714,7 +2738,8 @@ router.post('/generate', async function (request, response) {
             const responseText = await fetchResponse.text();
             const errorData = tryParse(responseText);
 
-            const message = fetchResponse.statusText || 'Unknown error occurred';
+            // NVIDIA returns {error: {title, detail}} — surface detail for a better message
+            let message = errorData?.error?.message || errorData?.error?.detail || errorData?.error?.title || fetchResponse.statusText || 'Unknown error occurred';
             const quota_error = fetchResponse.status === 429 && errorData?.error?.type === 'insufficient_quota';
             console.error('Chat completion request error: ', message, responseText);
 
